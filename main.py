@@ -3,6 +3,7 @@ from pyspark.sql import SparkSession
 # Create a Spark session
 spark = SparkSession.builder \
     .appName("PySpark Project") \
+    .config("spark.driver.bindAddress", "127.0.0.1") \
     .getOrCreate()
 
 # Create a simple DataFrame
