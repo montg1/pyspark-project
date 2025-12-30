@@ -23,8 +23,8 @@ pyspark-etl-project/
 │   └── main.py                 # Application entry point
 ├── scripts/                     # Executable scripts
 │   └── read_output.py          # Data reader script
-├── data/                        # Input data files
-│   ├── winemag-data-130k-v2.csv # Wine reviews dataset from Kaggle
+├── data/                        # Input data files (not included in repo)
+│   ├── winemag-data-130k-v2.csv # Wine reviews dataset (download from Kaggle)
 │   ├── wine_reviews_sample.csv  # Sample wine data for testing
 │   └── employees.csv            # Legacy employee data
 ├── config/                      # Configuration files
@@ -67,7 +67,22 @@ pyspark-etl-project/
    make install
    ```
 
-3. **Run the ETL pipeline:**
+3. **Download wine reviews data:**
+   ```bash
+   # Option 1: Using Kaggle CLI (recommended)
+   pip install kaggle
+   kaggle datasets download -d zynicide/wine-reviews -p data/
+   cd data && unzip wine-reviews.zip
+
+   # Option 2: Manual download
+   # Go to https://www.kaggle.com/datasets/zynicide/wine-reviews
+   # Download the dataset and place winemag-data-130k-v2.csv in the data/ directory
+
+   # Option 3: Use sample data for testing
+   # The pipeline will work with the included wine_reviews_sample.csv
+   ```
+
+4. **Run the ETL pipeline:**
    ```bash
    # Using Python module
    python -m src.main
