@@ -1,10 +1,14 @@
 """
-ETL (Extract, Transform, Load) pipeline for employee data processing.
+ETL (Extract, Transform, Load) pipeline for wine reviews data processing.
 """
 
-from pyspark.sql.functions import col, when, avg, round as spark_round
-from src.utils.spark_utils import create_spark_session, ensure_directory, validate_file_exists
-from src.config.settings import ETL_CONFIG, SALARY_THRESHOLDS, AGE_THRESHOLDS
+from pyspark.sql.functions import col, when, avg, round as spark_round, count
+from src.utils.spark_utils import (
+    create_spark_session,
+    ensure_directory,
+    validate_file_exists,
+)
+from src.config.settings import ETL_CONFIG, POINTS_THRESHOLDS, PRICE_THRESHOLDS
 
 
 def extract_data(spark, file_path):
@@ -27,43 +31,46 @@ def extract_data(spark, file_path):
 
 def transform_data(df):
     """
-    Transform the data: clean, add calculations, and filter.
+    Transform the wine reviews data: clean, add calculations, and filter.
 
     Args:
-        df (DataFrame): Raw input data
+        df (DataFrame): Raw wine reviews data
 
     Returns:
-        DataFrame: Transformed data
+        DataFrame: Transformed wine data
     """
-    # Clean data: handle missing values
-    df_clean = df.dropna()
+    # Clean data: handle missing values and filter out invalid entries
+    df_clean = df.dropna(subset=["country", "points", "price", "variety"])
 
-    # Add calculated columns using configuration
+    # Add quality category based on points
     df_transformed = df_clean.withColumn(
-        "Salary_Category",
-        when(col("Salary") >= SALARY_THRESHOLDS["high"], "High")
-        .when(col("Salary") >= SALARY_THRESHOLDS["medium"], "Medium")
-        .otherwise("Low")
+        "Quality_Category",
+        when(col("points") >= POINTS_THRESHOLDS["excellent"], "Excellent")
+        .when(col("points") >= POINTS_THRESHOLDS["good"], "Good")
+        .when(col("points") >= POINTS_THRESHOLDS["average"], "Average")
+        .otherwise("Below Average"),
     )
 
-    # Add age group
+    # Add price category
     df_transformed = df_transformed.withColumn(
-        "Age_Group",
-        when(col("Age") < AGE_THRESHOLDS["young"], "Young")
-        .when(col("Age") < AGE_THRESHOLDS["middle"], "Middle")
-        .otherwise("Senior")
+        "Price_Category",
+        when(col("price") >= PRICE_THRESHOLDS["premium"], "Premium")
+        .when(col("price") >= PRICE_THRESHOLDS["mid_range"], "Mid-Range")
+        .otherwise("Budget"),
     )
 
-    # Calculate department averages
-    dept_avg = df_transformed.groupBy("Department").agg(
-        spark_round(avg("Salary"), 2).alias("Dept_Avg_Salary")
+    # Calculate country statistics
+    country_stats = df_transformed.groupBy("country").agg(
+        spark_round(avg("points"), 2).alias("Country_Avg_Points"),
+        spark_round(avg("price"), 2).alias("Country_Avg_Price"),
+        count("*").alias("Wine_Count"),
     )
 
     # Join back to main dataframe
-    df_final = df_transformed.join(dept_avg, "Department")
+    df_final = df_transformed.join(country_stats, "country")
 
-    # Filter: keep only employees above department average
-    df_filtered = df_final.filter(col("Salary") > col("Dept_Avg_Salary"))
+    # Filter: keep only wines above country average points
+    df_filtered = df_final.filter(col("points") > col("Country_Avg_Points"))
 
     return df_filtered
 
@@ -112,7 +119,7 @@ def run_etl_pipeline(input_path=None, output_path=None, spark_config=None):
     spark = create_spark_session(extra_config=spark_config)
 
     try:
-        print(f"Starting ETL pipeline...")
+        print("Starting ETL pipeline...")
         print(f"Input: {input_file}")
         print(f"Output: {output_dir}")
 

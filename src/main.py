@@ -3,7 +3,6 @@ Main entry point for PySpark ETL project.
 """
 
 from src.etl.etl import run_etl_pipeline
-from src.config.settings import ETL_CONFIG
 
 
 def main():
