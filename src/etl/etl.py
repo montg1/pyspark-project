@@ -111,8 +111,22 @@ def run_etl_pipeline(input_path=None, output_path=None, spark_config=None):
         output_path (str): Path to output directory (uses config default if None)
         spark_config (dict): Additional Spark configuration
     """
-    # Use configuration defaults if not provided
-    input_file = input_path or ETL_CONFIG["input_file"]
+    # Auto-detect input file: use full dataset if available, otherwise sample data
+    if input_path is None:
+        import os
+        full_dataset = ETL_CONFIG["full_dataset"]
+        sample_dataset = ETL_CONFIG["input_file"]
+
+        if os.path.exists(full_dataset):
+            input_file = full_dataset
+            print(f"📊 Using full wine reviews dataset: {full_dataset}")
+        else:
+            input_file = sample_dataset
+            print(f"📊 Using sample wine data: {sample_dataset}")
+            print("💡 Tip: Download the full dataset from Kaggle for complete analysis!")
+    else:
+        input_file = input_path
+
     output_dir = output_path or ETL_CONFIG["output_dir"]
     output_format = ETL_CONFIG["output_format"]
 

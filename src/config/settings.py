@@ -17,7 +17,8 @@ OUTPUT_DIR = "output"
 
 # ETL specific settings
 ETL_CONFIG = {
-    "input_file": f"{DATA_DIR}/winemag-data-130k-v2.csv",
+    "input_file": f"{DATA_DIR}/wine_reviews_sample.csv",  # Default to sample data
+    "full_dataset": f"{DATA_DIR}/winemag-data-130k-v2.csv",  # Full dataset if available
     "output_dir": f"{OUTPUT_DIR}/transformed_wine_reviews",
     "output_format": "parquet",  # parquet, csv, json
 }

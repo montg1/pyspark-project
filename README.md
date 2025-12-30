@@ -82,14 +82,16 @@ pyspark-etl-project/
    # The pipeline will work with the included wine_reviews_sample.csv
    ```
 
-4. **Run the ETL pipeline:**
+3. **Run the ETL pipeline:**
    ```bash
-   # Using Python module
+   # Using Python module (auto-detects available data)
    python -m src.main
 
    # Or using Make
    make run
    ```
+
+   **Note**: The pipeline automatically uses the full wine reviews dataset if available, otherwise falls back to sample data for testing.
 
 4. **View results:**
    ```bash
