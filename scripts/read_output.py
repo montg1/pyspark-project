@@ -41,11 +41,17 @@ def main():
         print(f"📋 Columns: {df.columns}")
 
         # Show some statistics
-        print("\n📊 Department Summary:")
-        df.groupBy("Department").count().show()
+        print("\n📊 Country Summary:")
+        df.groupBy("country").count().orderBy("count", ascending=False).show(10)
 
-        print("\n💰 Salary Categories:")
-        df.groupBy("Salary_Category").count().show()
+        print("\n⭐ Quality Categories:")
+        df.groupBy("Quality_Category").count().orderBy("count", ascending=False).show()
+
+        print("\n💰 Price Categories:")
+        df.groupBy("Price_Category").count().orderBy("count", ascending=False).show()
+
+        print("\n🍷 Top Varieties:")
+        df.groupBy("variety").count().orderBy("count", ascending=False).show(10)
 
     except Exception as e:
         print(f"❌ Error reading data: {str(e)}")
