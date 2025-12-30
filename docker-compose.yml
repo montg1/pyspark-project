@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  pyspark-etl:
+    build: .
+    volumes:
+      - ./data:/app/data
+      - ./output:/app/output
+      - ./config:/app/config
+    environment:
+      - PYTHONPATH=/app/src
+    command: python -m src.main
+
+  pyspark-etl-dev:
+    build: .
+    volumes:
+      - .:/app
+      - ./data:/app/data
+      - ./output:/app/output
+    environment:
+      - PYTHONPATH=/app/src
+    command: tail -f /dev/null  # Keep container running for development
+
+  test:
+    build: .
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONPATH=/app/src
+    command: python -m pytest src/tests/ -v
