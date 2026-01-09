@@ -3,7 +3,7 @@ Utility for reading and querying transformed Parquet data from ETL output.
 """
 
 import os
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from src.utils.spark_utils import create_spark_session
 
 
@@ -47,7 +47,8 @@ class DataReader:
         Get statistics by country.
 
         Returns:
-            List[Dict]: Country statistics including average points, price, wine count
+            List[Dict]: Country statistics including average points,
+                price, and wine count
         """
         if self.df is None:
             if not self.load_data():
@@ -62,8 +63,10 @@ class DataReader:
             for row in stats:
                 result.append({
                     "country": row[0],
-                    "avg_points": round(float(row[1]), 2) if row[1] else None,
-                    "avg_price": round(float(row[2]), 2) if row[2] else None,
+                    "avg_points": (round(float(row[1]), 2)
+                                   if row[1] else None),
+                    "avg_price": (round(float(row[2]), 2)
+                                  if row[2] else None),
                     "wine_count": int(row[3]) if row[3] else 0
                 })
             return sorted(result, key=lambda x: x["wine_count"], reverse=True)
@@ -113,7 +116,9 @@ class DataReader:
             print(f"❌ Error getting price distribution: {str(e)}")
             return {}
 
-    def get_wine_data(self, limit: int = 100, offset: int = 0) -> List[Dict[str, Any]]:
+    def get_wine_data(
+        self, limit: int = 100, offset: int = 0
+    ) -> List[Dict[str, Any]]:
         """
         Get paginated wine review data.
 
@@ -153,7 +158,9 @@ class DataReader:
                 return []
 
         try:
-            top = self.df.groupBy("variety").count().orderBy("count", ascending=False).limit(limit).collect()
+            top = (self.df.groupBy("variety").count()
+                   .orderBy("count", ascending=False)
+                   .limit(limit).collect())
             result = []
             for row in top:
                 result.append({

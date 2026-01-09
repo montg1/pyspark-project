@@ -11,7 +11,10 @@ from src.api.data_reader import DataReader
 # Initialize FastAPI app
 app = FastAPI(
     title="Wine Reviews API",
-    description="API for exploring wine reviews data processed by PySpark ETL pipeline",
+    description=(
+        "API for exploring wine reviews data "
+        "processed by PySpark ETL pipeline"
+    ),
     version="1.0.0"
 )
 
@@ -30,7 +33,7 @@ _data_reader = None
 
 def get_data_reader() -> DataReader:
     """Get or initialize DataReader instance."""
-    global _data_reader
+    global _data_reader  # noqa: F824
     if _data_reader is None:
         _data_reader = DataReader()
     return _data_reader
@@ -84,7 +87,9 @@ async def get_price_distribution() -> Dict[str, int]:
 
 
 @app.get("/stats/top-varieties")
-async def get_top_varieties(limit: int = Query(10, ge=1, le=50)) -> List[Dict[str, Any]]:
+async def get_top_varieties(
+    limit: int = Query(10, ge=1, le=50)
+) -> List[Dict[str, Any]]:
     """
     Get top wine varieties by count.
 
@@ -141,7 +146,7 @@ async def get_wines(
 @app.on_event("shutdown")
 def shutdown_event():
     """Clean up Spark session on shutdown."""
-    global _data_reader
+    global _data_reader  # noqa: F824
     if _data_reader:
         _data_reader.close()
 
