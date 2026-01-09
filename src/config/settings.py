@@ -17,19 +17,21 @@ OUTPUT_DIR = "output"
 
 # ETL specific settings
 ETL_CONFIG = {
-    "input_file": f"{DATA_DIR}/employees.csv",
-    "output_dir": f"{OUTPUT_DIR}/transformed_employees",
+    "input_file": f"{DATA_DIR}/wine_reviews_sample.csv",  # Default to sample data
+    "full_dataset": f"{DATA_DIR}/winemag-data-130k-v2.csv",  # Full dataset if available
+    "output_dir": f"{OUTPUT_DIR}/transformed_wine_reviews",
     "output_format": "parquet",  # parquet, csv, json
 }
 
-# Salary thresholds for categorization
-SALARY_THRESHOLDS = {
-    "high": 80000,
-    "medium": 60000,
+# Wine quality thresholds for categorization
+POINTS_THRESHOLDS = {
+    "excellent": 95,
+    "good": 85,
+    "average": 75,
 }
 
-# Age thresholds for grouping
-AGE_THRESHOLDS = {
-    "young": 30,
-    "middle": 40,
+# Price thresholds for categorization
+PRICE_THRESHOLDS = {
+    "premium": 100,
+    "mid_range": 50,
 }

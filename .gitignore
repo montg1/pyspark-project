@@ -126,6 +126,11 @@ dmypy.json
 output/
 logs/
 
+# Large data files (download from Kaggle)
+data/wine-reviews.zip
+data/winemag-data-*.csv
+data/winemag-data-*.json
+
 # IDE
 .vscode/
 .idea/

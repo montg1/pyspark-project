@@ -1,6 +1,6 @@
 # PySpark ETL Project
 
-A production-ready PySpark ETL (Extract, Transform, Load) pipeline for processing employee data with comprehensive testing, CI/CD, and containerization support.
+A production-ready PySpark ETL (Extract, Transform, Load) pipeline for processing wine reviews data with comprehensive testing, CI/CD, and containerization support.
 
 ## 🏗️ Project Structure
 
@@ -23,8 +23,10 @@ pyspark-etl-project/
 │   └── main.py                 # Application entry point
 ├── scripts/                     # Executable scripts
 │   └── read_output.py          # Data reader script
-├── data/                        # Input data files
-│   └── employees.csv           # Sample employee data
+├── data/                        # Input data files (not included in repo)
+│   ├── winemag-data-130k-v2.csv # Wine reviews dataset (download from Kaggle)
+│   ├── wine_reviews_sample.csv  # Sample wine data for testing
+│   └── employees.csv            # Legacy employee data
 ├── config/                      # Configuration files
 ├── docs/                        # Documentation
 ├── output/                      # Generated output (gitignored)
@@ -65,14 +67,31 @@ pyspark-etl-project/
    make install
    ```
 
+3. **Download wine reviews data:**
+   ```bash
+   # Option 1: Using Kaggle CLI (recommended)
+   pip install kaggle
+   kaggle datasets download -d zynicide/wine-reviews -p data/
+   cd data && unzip wine-reviews.zip
+
+   # Option 2: Manual download
+   # Go to https://www.kaggle.com/datasets/zynicide/wine-reviews
+   # Download the dataset and place winemag-data-130k-v2.csv in the data/ directory
+
+   # Option 3: Use sample data for testing
+   # The pipeline will work with the included wine_reviews_sample.csv
+   ```
+
 3. **Run the ETL pipeline:**
    ```bash
-   # Using Python module
+   # Using Python module (auto-detects available data)
    python -m src.main
 
    # Or using Make
    make run
    ```
+
+   **Note**: The pipeline automatically uses the full wine reviews dataset if available, otherwise falls back to sample data for testing.
 
 4. **View results:**
    ```bash
@@ -135,17 +154,17 @@ docker-compose up test
 ## 📊 ETL Pipeline Details
 
 ### Extract Phase
-- Reads employee data from CSV files
+- Reads wine reviews data from CSV files
 - Automatic schema inference
 - Error handling for missing files
 
 ### Transform Phase
-- **Data Cleaning**: Removes records with missing values
+- **Data Cleaning**: Removes records with missing critical values (country, points, price, variety)
 - **Categorization**:
-  - Salary categories: High (≥$80k), Medium (≥$60k), Low (<$60k)
-  - Age groups: Young (<30), Middle (30-39), Senior (≥40)
-- **Aggregation**: Calculates department average salaries
-- **Filtering**: Keeps only employees above department average
+  - Quality categories: Excellent (≥95 pts), Good (≥85 pts), Average (≥75 pts), Below Average (<75 pts)
+  - Price categories: Premium (≥$100), Mid-Range (≥$50), Budget (<$50)
+- **Aggregation**: Calculates country-level statistics (average points, average price, wine count)
+- **Filtering**: Keeps only wines above their country's average points rating
 
 ### Load Phase
 - Supports Parquet, CSV, and JSON output formats
@@ -155,13 +174,12 @@ docker-compose up test
 ### Sample Output
 
 ```
-+-----------+-----+---+-------------+------+---------------+-------+---------------+
-| Department| Name|Age|         City|Salary|Salary_Category|Age_Group|Dept_Avg_Salary|
-+-----------+-----+---+-------------+------+---------------+-------+---------------+
-|Engineering|  Bob| 30|San Francisco| 85000|           High|   Middle|        80000.0|
-|      Sales|Frank| 40|       Denver| 90000|           High|   Senior|       74333.33|
-|  Marketing|  Ivy| 29|     Portland| 72000|         Medium|    Young|        71000.0|
-+-----------+-----+---+-------------+------+---------------+-------+---------------+
++---------+---+--------------------+--------------------+------+-----+---------------+--------+--------+-----------------+---------------------+--------------------+----------+-------------+----------------+--------------+------------------+-----------------+----------+
+|  country|_c0|         description|         designation|points|price|        province|region_1|region_2|      taster_name|taster_twitter_handle|               title|   variety|       winery|Quality_Category|Price_Category|Country_Avg_Points|Country_Avg_Price|Wine_Count|
++---------+---+--------------------+--------------------+------+-----+---------------+--------+--------+-----------------+---------------------+--------------------+----------+-------------+----------------+--------------+------------------+-----------------+----------+
+|Argentina| 16|Baked plum, molas...|               Felix|    87| 30.0|           Other|Cafayate|    NULL|Michael Schachner|          @wineschach|Felix Lavaque 201...|    Malbec|Felix Lavaque|            Good|        Budget|             86.71|            24.51|      3756|
+|    Chile|103|A bright nose wit...|Single Vineyard F...|    87| 18.0|    Leyda Valle|    NULL|    NULL|Michael Schachner|          @wineschach|Leyda 2015 Single...|Chardonnay|        Leyda|            Good|        Budget|              86.5|            20.79|      4415|
++---------+---+--------------------+--------------------+------+-----+---------------+--------+--------+-----------------+---------------------+--------------------+----------+-------------+----------------+--------------+------------------+-----------------+----------+
 ```
 
 ## 🛠️ Development

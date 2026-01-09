@@ -22,7 +22,9 @@ def create_spark_session(app_name=None, extra_config=None):
     if extra_config:
         config.update(extra_config)
 
-    builder = SparkSession.builder.appName(app_name or config.get("spark.app.name", "PySpark ETL"))
+    builder = SparkSession.builder.appName(
+        app_name or config.get("spark.app.name", "PySpark ETL")
+    )
 
     for key, value in config.items():
         builder = builder.config(key, value)
