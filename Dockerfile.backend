@@ -11,7 +11,7 @@ RUN apt-get update && \
 # Set environment variables
 ENV JAVA_HOME=/usr/lib/jvm/default-java
 ENV PATH="$JAVA_HOME/bin:$PATH"
-ENV PYTHONPATH=/app/src:$PYTHONPATH
+ENV PYTHONPATH=/app/src
 ENV PYTHONUNBUFFERED=1
 
 # Set working directory
@@ -25,7 +25,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY src/ ./src/
 COPY scripts/ ./scripts/
 COPY data/ ./data/
-COPY config/ ./config/
+
+# Copy config if it exists (optional)
+RUN mkdir -p config
+COPY config/ ./config/ 2>/dev/null || true
 
 # Create output directory
 RUN mkdir -p output
