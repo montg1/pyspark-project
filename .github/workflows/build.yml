@@ -1,0 +1,167 @@
+name: Build & Deploy
+
+on:
+  push:
+    branches: [ main, develop ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+jobs:
+  build-backend:
+    runs-on: ubuntu-latest
+    name: Build Backend Image
+    outputs:
+      image: ${{ steps.meta.outputs.tags }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: wine-api-backend
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+      
+      - name: Build backend
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile.backend
+          push: false
+          tags: wine-api-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-frontend:
+    runs-on: ubuntu-latest
+    name: Build Frontend Image
+    outputs:
+      image: ${{ steps.meta.outputs.tags }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: wine-dashboard-frontend
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+      
+      - name: Build frontend
+        uses: docker/build-push-action@v4
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: false
+          tags: wine-dashboard-frontend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-etl:
+    runs-on: ubuntu-latest
+    name: Build ETL Image
+    outputs:
+      image: ${{ steps.meta.outputs.tags }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: pyspark-etl
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+      
+      - name: Build ETL
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: pyspark-etl:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  create-release:
+    runs-on: ubuntu-latest
+    name: Create Release
+    needs: [build-backend, build-frontend, build-etl]
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Get tag version
+        id: tag
+        run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ steps.tag.outputs.version }}
+          body: |
+            ## Wine Reviews Platform ${{ steps.tag.outputs.version }}
+            
+            ### Docker Images
+            - Backend: wine-api-backend:${{ steps.tag.outputs.version }}
+            - Frontend: wine-dashboard-frontend:${{ steps.tag.outputs.version }}
+            - ETL: pyspark-etl:${{ steps.tag.outputs.version }}
+            
+            ### What's Included
+            - PySpark ETL pipeline for data transformation
+            - FastAPI backend with 7 REST endpoints
+            - Vue 3 interactive dashboard with charts
+            - Complete Docker Compose setup
+            
+            ### Documentation
+            - [Quick Start Guide](DOCKER_QUICKSTART.md)
+            - [Detailed Guide](DOCKER_GUIDE.md)
+            - [Architecture](DOCKER_ARCHITECTURE.md)
+          draft: false
+          prerelease: false
+
+  notification:
+    runs-on: ubuntu-latest
+    name: Build Notification
+    needs: [build-backend, build-frontend, build-etl]
+    if: always()
+    
+    steps:
+      - name: Send success notification
+        if: ${{ needs.build-backend.result == 'success' && needs.build-frontend.result == 'success' && needs.build-etl.result == 'success' }}
+        run: |
+          echo "✅ All Docker images built successfully!"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+      
+      - name: Send failure notification
+        if: ${{ failure() }}
+        run: |
+          echo "❌ Build failed for one or more images"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          exit 1
