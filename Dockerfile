@@ -4,12 +4,12 @@ FROM python:3.9-slim
 
 # Install Java (required for PySpark)
 RUN apt-get update && \
-    apt-get install -y openjdk-11-jdk && \
+    apt-get install -y default-jdk && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 # Set environment variables
-ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+ENV JAVA_HOME=/usr/lib/jvm/default-java
 ENV PATH="$JAVA_HOME/bin:$PATH"
 ENV PYTHONPATH=/app/src:$PYTHONPATH
 

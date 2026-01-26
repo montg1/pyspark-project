@@ -1,6 +1,9 @@
 import axios from 'axios'
 
-const API_BASE_URL = 'http://localhost:8000'
+// Use relative API path for Docker compatibility
+// In Docker: http://frontend/api/ proxies to http://backend:8000/
+// In dev: http://localhost:5173/api/ proxies to http://localhost:8000/
+const API_BASE_URL = '/api'
 
 const api = axios.create({
   baseURL: API_BASE_URL,

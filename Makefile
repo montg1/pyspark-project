@@ -1,10 +1,12 @@
 # Makefile for PySpark ETL Project
 
-.PHONY: help install test run clean lint format docs docker-build docker-run
+.PHONY: help install test run clean lint format docs docker-build docker-run docker-compose-up docker-compose-down docker-logs
 
 # Default target
 help:
 	@echo "Available commands:"
+	@echo ""
+	@echo "Local Development:"
 	@echo "  install      - Install dependencies"
 	@echo "  test         - Run all tests"
 	@echo "  run          - Run the ETL pipeline"
@@ -13,8 +15,17 @@ help:
 	@echo "  lint         - Run linting"
 	@echo "  format       - Format code"
 	@echo "  docs         - Generate documentation"
-	@echo "  docker-build - Build Docker image"
-	@echo "  docker-run   - Run in Docker container"
+	@echo ""
+	@echo "Docker:"
+	@echo "  docker-build     - Build Docker images"
+	@echo "  docker-up        - Start all services (docker-compose up)"
+	@echo "  docker-down      - Stop all services (docker-compose down)"
+	@echo "  docker-logs      - View logs (docker-compose logs -f)"
+	@echo "  docker-ps        - Show running containers"
+	@echo "  docker-rebuild   - Rebuild without cache"
+	@echo "  docker-clean     - Remove containers and volumes"
+	@echo "  docker-backend   - Shell into backend container"
+	@echo "  docker-frontend  - Shell into frontend container"
 
 # Installation
 install:
@@ -55,7 +66,32 @@ format:
 docs:
 	sphinx-build docs/ docs/_build/html
 
-# Docker
+# Docker Compose Commands
+docker-up:
+	docker-compose up -d
+
+docker-down:
+	docker-compose down
+
+docker-logs:
+	docker-compose logs -f
+
+docker-ps:
+	docker-compose ps
+
+docker-rebuild:
+	docker-compose build --no-cache
+
+docker-clean:
+	docker-compose down -v --remove-orphans
+
+docker-backend:
+	docker-compose exec backend bash
+
+docker-frontend:
+	docker-compose exec frontend sh
+
+# Legacy Docker commands
 docker-build:
 	docker build -t pyspark-etl .
 

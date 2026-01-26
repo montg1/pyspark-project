@@ -1,30 +1,110 @@
 version: '3.8'
 
 services:
-  pyspark-etl:
-    build: .
+  # ETL Service - Runs PySpark ETL pipeline
+  etl:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pyspark-etl
     volumes:
-      - ./data:/app/data
+      - ./data:/app/data:ro
+      - ./output:/app/output
+      - ./config:/app/config:ro
+    environment:
+      - PYTHONPATH=/app/src
+      - PYTHONUNBUFFERED=1
+    command: python -c "from src.etl.etl import run_etl_pipeline; run_etl_pipeline()"
+    networks:
+      - app-network
+    depends_on:
+      - backend
+
+  # Backend Service - FastAPI Server
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: wine-api-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src:/app/src
       - ./output:/app/output
       - ./config:/app/config
+      - ./scripts:/app/scripts
+      - ./data:/app/data:ro
     environment:
       - PYTHONPATH=/app/src
-    command: python -m src.main
+      - PYTHONUNBUFFERED=1
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
-  pyspark-etl-dev:
-    build: .
+  # Frontend Service - Vue 3 + Nginx
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: wine-dashboard-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Development ETL Service (optional - for testing/development)
+  etl-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pyspark-etl-dev
     volumes:
       - .:/app
       - ./data:/app/data
       - ./output:/app/output
     environment:
       - PYTHONPATH=/app/src
-    command: tail -f /dev/null  # Keep container running for development
+      - PYTHONUNBUFFERED=1
+    networks:
+      - app-network
+    command: tail -f /dev/null  # Keep running for manual commands
+    profiles:
+      - dev
 
+  # Test Service (optional - for running tests)
   test:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pyspark-tests
     volumes:
       - .:/app
     environment:
       - PYTHONPATH=/app/src
-    command: python -m pytest src/tests/ -v
+      - PYTHONUNBUFFERED=1
+    networks:
+      - app-network
+    command: python -m pytest src/tests/ -v --tb=short
+    profiles:
+      - test
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  output:
+    driver: local

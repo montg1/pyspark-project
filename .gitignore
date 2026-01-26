@@ -131,6 +131,12 @@ data/wine-reviews.zip
 data/winemag-data-*.csv
 data/winemag-data-*.json
 
+# Frontend
+frontend/node_modules/
+frontend/dist/
+.env.local
+.env.*.local
+
 # IDE
 .vscode/
 .idea/
