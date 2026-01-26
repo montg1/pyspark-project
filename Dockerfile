@@ -39,12 +39,8 @@ COPY src/ ./src/
 COPY scripts/ ./scripts/
 COPY data/ ./data/
 
-# Copy config if it exists (optional)
-RUN mkdir -p config
-COPY config/ ./config/ 2>/dev/null || true
-
-# Create output directory
-RUN mkdir -p output
+# Create config and output directories
+RUN mkdir -p config output
 
 # Default command
 CMD ["python", "-m", "src.main"]
